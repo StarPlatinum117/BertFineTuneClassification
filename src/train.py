@@ -1,11 +1,14 @@
+import logging
+import pathlib
 from collections import defaultdict
 from contextlib import nullcontext
-import logging
 from typing import Callable
 
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
+
+MODELS_DIR = pathlib.Path(__file__).parent.parent / "models"
 
 
 def train_classifier(
@@ -19,7 +22,7 @@ def train_classifier(
         device: str,
 ) -> tuple[Module, dict[str, defaultdict[list]]]:
     """
-    Train a text classifier model.
+    Trains a text classifier model and stores the best model based on validation loss.
 
     Parameters:
         model: The model to train.
@@ -41,17 +44,28 @@ def train_classifier(
         filter(lambda p: p.requires_grad, model.parameters()),
     )
 
+    # Keep track of best model.
+    best_val_loss = float("inf")
+    best_model_state = None
+
     # Training loop
     metrics = {"training": defaultdict(list), "validation": defaultdict(list)}
     for epoch in range(num_epochs):
         # Run the training and validation epochs.
         train_loss, train_acc = run_epoch(model, loss_fn, device, data_loader=train_loader, optimizer=optimizer)
         val_loss, val_acc = run_epoch(model, loss_fn, device, data_loader=val_loader, optimizer=None)
+
         # Keep track of metrics.
         metrics["training"]["loss"].append(train_loss)
         metrics["training"]["accuracy"].append(train_acc)
         metrics["validation"]["loss"].append(val_loss)
         metrics["validation"]["accuracy"].append(val_acc)
+
+        # Compare to best model and save if necessary.
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_state = model.state_dict()
+
         # Print statistics.
         logging.info(
             f"Epoch {epoch + 1}/{num_epochs}: \n" 
@@ -59,6 +73,17 @@ def train_classifier(
             f"Train Accuracy: {train_acc: .4f}, Validation Accuracy: {val_acc: .4f} \n"
             "=" * 70
         )
+
+    # Save the best model.
+    MODELS_DIR.mkdir(parents=False, exist_ok=True)
+    model_path = MODELS_DIR / "best_model.pt"
+    torch.save(best_model_state, model_path)
+    logging.info(
+        f"Best model saved to: {model_path}\n"
+        f"Best validation loss: {best_val_loss: .4f}"
+    )
+    # Return the best model and all training metrics.
+    model.load_state_dict(best_model_state)
 
     return model, metrics
 

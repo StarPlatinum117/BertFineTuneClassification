@@ -57,7 +57,7 @@ logging.info("Model loaded successfully.")
 
 # Commence training.
 logging.info("Starting training process...")
-model, epoch_losses = train_classifier(
+model, metrics = train_classifier(
     model,
     train_loader=train_loader,
     val_loader=val_loader,
