@@ -1,14 +1,14 @@
 import torch
 from torch.nn import Module
-from transformers import BertForSequenceClassification
+from transformers import DistilBertForSequenceClassification
 
 
-def load_model(num_labels: int, device: str = "cpu") -> Module:
+def load_model(model_name: str, num_labels: int, device: str = "cpu") -> Module:
     device = torch.device(device)
     # Load vanilla model (google-bert/bert-base-uncased is too big).
-    model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=num_labels)
+    model = DistilBertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
     # Freeze encoder parameters.x
-    for name, param in model.bert.named_parameters():
+    for name, param in model.distilbert.named_parameters():
         param.requires_grad = False
     model.to(device)
     return model

@@ -1,13 +1,15 @@
 import logging
 
 import numpy as np
+import pathlib
 import torch.cuda
 from torch.optim import SGD, AdamW
-from transformers import BertTokenizer
+from transformers import DistilBertTokenizer
 
 from model import load_model
 from src.dataset import get_dataloaders
 from src.train import train_classifier
+from src.visualization import plot_training_curves
 
 
 def set_seed(seed: int) -> None:
@@ -28,6 +30,7 @@ n_epochs = 2
 batch_size = 16
 loss_fn = torch.nn.CrossEntropyLoss()
 device = "cuda" if torch.cuda.is_available() else "cpu"
+model_name = "distilbert-base-uncased"
 # ========================= Optimizer Config. ======================================
 optimizer_config = {
     "adamw": {
@@ -53,7 +56,7 @@ chosen_optimizer_config = optimizer_config[chosen_optimizer]
 set_seed(seed)
 # Load tokenizer and dataset.
 logging.info("Starting the AG News dataset loading process...")
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = DistilBertTokenizer.from_pretrained(model_name)
 train_loader, val_loader, test_loader = get_dataloaders(
     tokenizer, batch_size=batch_size, max_len=tokenizer_max_len,
 )
@@ -61,7 +64,7 @@ logging.info("AG News dataset loaded successfully.")
 
 # Load model.
 logging.info("Loading bert-base-uncased model")
-model = load_model(num_labels=4, device=device)
+model = load_model(model_name, num_labels=4, device=device)
 logging.info("Model loaded successfully.")
 
 # Commence training.
@@ -76,3 +79,10 @@ model, metrics = train_classifier(
     device=device
 )
 logging.info("Training process completed successfully.")
+
+# Visualize metrics.
+output_path = pathlib.Path(__file__).parent / "training_curves.png"
+plot_training_curves(metrics, save_path=output_path)
+logging.info(f"Training curves saved to {output_path}")
+
+# Evaluate the model on the test set.
