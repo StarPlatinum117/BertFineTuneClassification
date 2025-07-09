@@ -24,7 +24,7 @@ logging.basicConfig(
 # ============================ Settings. ===========================================
 seed = 1
 tokenizer_max_len = 128
-n_epochs = 5
+n_epochs = 2
 batch_size = 16
 loss_fn = torch.nn.CrossEntropyLoss()
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -76,4 +76,3 @@ model, metrics = train_classifier(
     device=device
 )
 logging.info("Training process completed successfully.")
-
