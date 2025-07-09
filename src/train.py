@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import time
 from collections import defaultdict
 from contextlib import nullcontext
 from typing import Callable
@@ -42,18 +43,24 @@ def train_classifier(
     # Initialize the optimizer with the model parameters that require gradients.
     optimizer = optimizer_config["class"](
         filter(lambda p: p.requires_grad, model.parameters()),
+        **optimizer_config["params"],
     )
 
     # Keep track of best model.
     best_val_loss = float("inf")
+    best_val_acc = float("-inf")
     best_model_state = None
 
     # Training loop
     metrics = {"training": defaultdict(list), "validation": defaultdict(list)}
     for epoch in range(num_epochs):
+        start_time = time.time()
         # Run the training and validation epochs.
         train_loss, train_acc = run_epoch(model, loss_fn, device, data_loader=train_loader, optimizer=optimizer)
         val_loss, val_acc = run_epoch(model, loss_fn, device, data_loader=val_loader, optimizer=None)
+        end_time = time.time()
+        epoch_time = end_time - start_time
+        epoch_time = time.strftime("%H:%M:%S", time.gmtime(epoch_time))
 
         # Keep track of metrics.
         metrics["training"]["loss"].append(train_loss)
@@ -64,11 +71,12 @@ def train_classifier(
         # Compare to best model and save if necessary.
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+            best_val_acc = val_acc
             best_model_state = model.state_dict()
 
         # Print statistics.
         logging.info(
-            f"Epoch {epoch + 1}/{num_epochs}: \n" 
+            f"Epoch {epoch + 1}/{num_epochs}. Duration {epoch_time}. \n" 
             f"Train Loss: {train_loss: .4f}, Validation Loss: {val_loss: .4f} \n"
             f"Train Accuracy: {train_acc: .4f}, Validation Accuracy: {val_acc: .4f} \n"
             "=" * 70
@@ -80,7 +88,8 @@ def train_classifier(
     torch.save(best_model_state, model_path)
     logging.info(
         f"Best model saved to: {model_path}\n"
-        f"Best validation loss: {best_val_loss: .4f}"
+        f"Best validation loss: {best_val_loss: .4f}\n"
+        f"Best validation accuracy: {best_val_acc: .4f}"
     )
     # Return the best model and all training metrics.
     model.load_state_dict(best_model_state)
@@ -135,6 +144,7 @@ def run_epoch(
         # Backward pass and optimization step if training.
         if is_training:
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # prevent exploiting gradients by clipping
             optimizer.step()
 
         total_loss += loss.item()

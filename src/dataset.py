@@ -37,8 +37,7 @@ class AGNewsDataset(Dataset):
 def get_dataloaders(
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int = 16,
-        max_len: int = 128,
-        seed: int = 1) -> tuple[DataLoader, DataLoader, DataLoader]:
+        max_len: int = 128) -> tuple[DataLoader, DataLoader, DataLoader]:
     """
     Loads and splits the AG News dataset into training, validation, and test sets.
 
@@ -46,20 +45,17 @@ def get_dataloaders(
         tokenizer: The tokenizer to use for encoding the text.
         batch_size: The batch size for the DataLoader.
         max_len: The maximum length of the input sequences.
-        seed: Random seed for reproducibility.
     Returns:
         train_loader: DataLoader for the training set.
         val_loader: DataLoader for the validation set.
         test_loader: DataLoader for the test set.
     """
-    # Set the random seed for reproducibility.
-    np.random.seed(seed)
     # Load the AG News dataset.
     dataset = datasets.load_dataset("ag_news")
     raw_train = dataset["train"]
     test_dataset = dataset["test"]
     # Split the training set into training and validation sets. Prepare train, val, test.
-    train_val_dataset = raw_train.train_test_split(test_size=0.1, seed=seed, stratify_by_column="label")
+    train_val_dataset = raw_train.train_test_split(test_size=0.1, stratify_by_column="label")
     train_dataset = train_val_dataset["train"]
     val_dataset = train_val_dataset["test"]
     # Create the datasets.
