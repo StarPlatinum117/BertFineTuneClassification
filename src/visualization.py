@@ -37,5 +37,6 @@ def plot_training_curves(metrics: dict, save_path: pathlib.Path | None = None) -
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path)
-    plt.show()
+    plt.show(block=False)
+    plt.pause(0.01)  # Allow the plot to render in non-blocking mode.
 

@@ -8,6 +8,7 @@ from typing import Callable
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 MODELS_DIR = pathlib.Path(__file__).parent.parent / "models"
 
@@ -79,7 +80,7 @@ def train_classifier(
             f"Epoch {epoch + 1}/{num_epochs}. Duration {epoch_time}. \n" 
             f"Train Loss: {train_loss: .4f}, Validation Loss: {val_loss: .4f} \n"
             f"Train Accuracy: {train_acc: .4f}, Validation Accuracy: {val_acc: .4f} \n"
-            "=" * 70
+            + "=" * 70
         )
 
     # Save the best model.
@@ -125,7 +126,7 @@ def run_epoch(
     correct_preds = 0
     total_preds = 0
 
-    for batch in data_loader:
+    for batch in tqdm(data_loader, desc="Training" if is_training else "Validating", leave=False):
         # Move data to device.
         input_ids = batch[0].to(device)
         attention_mask = batch[1].to(device)
@@ -154,8 +155,8 @@ def run_epoch(
         total_preds += labels.size(0)
 
     # Compute epoch loss and accuracy.
-    avg_loss = total_loss / len(data_loader)
-    accuracy = correct_preds / total_preds
+    avg_loss = total_loss / len(data_loader)  # avg over batches
+    accuracy = correct_preds / total_preds    # avg over predictions
     return avg_loss, accuracy
 
 

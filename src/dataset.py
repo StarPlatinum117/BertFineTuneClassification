@@ -87,7 +87,8 @@ class AGNewsDataset(TorchDataset):
 def get_dataloaders(
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int = 16,
-        max_len: int = 128
+        max_len: int = 128,
+        light_training: bool = False,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
     """
     Loads and splits the AG News dataset into training, validation, and test sets.
@@ -96,6 +97,7 @@ def get_dataloaders(
         tokenizer: The tokenizer to use for encoding the text.
         batch_size: The batch size for the DataLoader.
         max_len: The maximum length of the input sequences.
+        light_training: If True, uses a smaller dataset for faster training.
     Returns:
         train_loader: DataLoader for the training set.
         val_loader: DataLoader for the validation set.
@@ -113,6 +115,11 @@ def get_dataloaders(
     train_dataset = AGNewsDataset("train", train_dataset, tokenizer, max_length=max_len)
     val_dataset = AGNewsDataset("validation", val_dataset, tokenizer, max_length=max_len)
     test_dataset = AGNewsDataset("test", test_dataset, tokenizer, max_length=max_len)
+    # If light training is enabled, reduce the dataset size.
+    if light_training:
+        train_dataset = torch.utils.data.Subset(train_dataset, range(1000))
+        val_dataset = torch.utils.data.Subset(val_dataset, range(1000))
+        test_dataset = torch.utils.data.Subset(test_dataset, range(1000))
     # Create the DataLoaders.
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

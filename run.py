@@ -8,6 +8,7 @@ from transformers import DistilBertTokenizer
 
 from model import load_model
 from src.dataset import get_dataloaders
+from src.evaluation import evaluate_classifier
 from src.train import train_classifier
 from src.visualization import plot_training_curves
 
@@ -26,11 +27,12 @@ logging.basicConfig(
 # ============================ Settings. ===========================================
 seed = 1
 tokenizer_max_len = 128
-n_epochs = 2
+n_epochs = 5
 batch_size = 16
 loss_fn = torch.nn.CrossEntropyLoss()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_name = "distilbert-base-uncased"
+light_training = True  # faster training with smaller dataset
 # ========================= Optimizer Config. ======================================
 optimizer_config = {
     "adamw": {
@@ -58,12 +60,12 @@ set_seed(seed)
 logging.info("Starting the AG News dataset loading process...")
 tokenizer = DistilBertTokenizer.from_pretrained(model_name)
 train_loader, val_loader, test_loader = get_dataloaders(
-    tokenizer, batch_size=batch_size, max_len=tokenizer_max_len,
+    tokenizer, batch_size=batch_size, max_len=tokenizer_max_len, light_training=light_training
 )
 logging.info("AG News dataset loaded successfully.")
 
 # Load model.
-logging.info("Loading bert-base-uncased model")
+logging.info(f"Loading {model_name} model")
 model = load_model(model_name, num_labels=4, device=device)
 logging.info("Model loaded successfully.")
 
@@ -86,3 +88,5 @@ plot_training_curves(metrics, save_path=output_path)
 logging.info(f"Training curves saved to {output_path}")
 
 # Evaluate the model on the test set.
+logging.info("Starting evaluation on the test set...")
+test_loss, test_acc = evaluate_classifier(model, test_loader, loss_fn, device)
