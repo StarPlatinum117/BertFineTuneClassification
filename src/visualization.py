@@ -1,5 +1,7 @@
-import matplotlib.pyplot as plt
+import logging
 import pathlib
+
+import matplotlib.pyplot as plt
 
 
 def plot_training_curves(metrics: dict, save_path: pathlib.Path | None = None) -> None:
@@ -37,6 +39,7 @@ def plot_training_curves(metrics: dict, save_path: pathlib.Path | None = None) -
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path)
-    plt.show(block=False)
-    plt.pause(0.01)  # Allow the plot to render in non-blocking mode.
+        logging.info(f"Training curves saved to {save_path}")
+    else:
+        plt.show()
 

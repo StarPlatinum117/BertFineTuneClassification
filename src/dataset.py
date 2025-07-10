@@ -1,12 +1,12 @@
 import logging
-import datasets
 import pathlib
 import time
+
+import datasets
 import torch
-from datasets import DatasetDict
 from datasets import Dataset as HFDataset
-from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import DataLoader
+from torch.utils.data import Dataset as TorchDataset
 from transformers import PreTrainedTokenizerBase
 
 DATA_DIR = pathlib.Path(__file__).parent.parent / "data"

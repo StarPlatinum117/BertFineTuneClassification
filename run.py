@@ -1,9 +1,10 @@
 import logging
+import pathlib
 
 import numpy as np
-import pathlib
 import torch.cuda
-from torch.optim import SGD, AdamW
+from torch.optim import AdamW
+from torch.optim import SGD
 from transformers import DistilBertTokenizer
 
 from model import load_model
@@ -83,9 +84,8 @@ model, metrics = train_classifier(
 logging.info("Training process completed successfully.")
 
 # Visualize metrics.
-output_path = pathlib.Path(__file__).parent / "training_curves.png"
+output_path = pathlib.Path(__file__).parent / "training_plots" / "training_curves.png"
 plot_training_curves(metrics, save_path=output_path)
-logging.info(f"Training curves saved to {output_path}")
 
 # Evaluate the model on the test set.
 logging.info("Starting evaluation on the test set...")
